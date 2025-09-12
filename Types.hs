@@ -4,5 +4,5 @@ data Usuario = Usuario {
      nome :: String,
      matricula :: String,
      email :: String
-} deriving (show)
+} deriving (Show, Eq)
 
