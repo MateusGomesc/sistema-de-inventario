@@ -2,7 +2,7 @@ module Types where
 
 data Usuario = Usuario {
      nome :: String,
-     matricula :: Int,
+     matricula :: String,
      email :: String
 } deriving (show)
 
