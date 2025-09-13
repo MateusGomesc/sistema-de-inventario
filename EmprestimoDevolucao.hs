@@ -1,4 +1,17 @@
+module EmprestimoDevolucao where
+
 --Chamar registrarEmprestimo com: (emprestimosAtualizados, itensAtualizados) <- registrarEmprestimo itens usuarios emprestimos
+--Chamar registrarDevolucao com: (emprestimos, itens) <- registrarDevolucao itens usuarios emprestimos
+
+import Types
+import System.IO
+import Data.Time.Calendar
+import Data.Time.Clock
+import Data.List (find)
+import Data.Time.Calendar.WeekDate (toWeekDate)
+import Data.Time.Calendar (fromGregorian)
+import Control.Monad (when)
+import Data.Char (toLower)
 
 obterCodigoItem :: [Item] -> IO (Maybe Item)
 obterCodigoItem itens = do
@@ -30,8 +43,7 @@ confirmarEmprestimo item usuario = do
     putStrLn $ negrito "Usuário: " ++ nome usuario ++ " - Matrícula: " ++ matricula usuario
     putStrLn "Confirmar empréstimo? (s/n)"
     resp <- getLine
-    return (resp == "s")
-
+    return (map toLower resp == "s")
 
 gerarEmprestimo :: Item -> Usuario -> Day -> [Emprestimo] -> [Item] -> ([Emprestimo], [Item])
 gerarEmprestimo item usuario hoje emprestimos itens =
@@ -39,12 +51,13 @@ gerarEmprestimo item usuario hoje emprestimos itens =
                     Filme -> 2
                     _     -> 5
         dataLimite = adicionarDiasUteis hoje dias
-        novoEmp = Emprestimo (codigo item) (read $ matricula usuario) hoje dataLimite hoje
+        novoEmp = Emprestimo (codigo item) (read $ matricula usuario) hoje dataLimite (fromGregorian 0000 1 1)
         itensAtualizados = atualizarStatusItem (codigo item) Emprestado itens
     in (adicionarEmprestimo emprestimos novoEmp, itensAtualizados)
 
 registrarEmprestimo :: [Item] -> [Usuario] -> [Emprestimo] -> IO ([Emprestimo], [Item])
 registrarEmprestimo itens usuarios emprestimos = do
+    putStrLn "[ REGISTRAR EMPRÉSTIMO ]"
     mItem <- obterCodigoItem itens
     case mItem of
         Nothing -> return (emprestimos, itens)
@@ -94,3 +107,71 @@ adicionarEmprestimo lista novo = novo : lista
 
 negrito :: String -> String
 negrito s = "\ESC[1m" ++ s ++ "\ESC[0m"
+
+
+obterCodigoItemParaDevolucao :: [Emprestimo] -> IO (Maybe Emprestimo)
+obterCodigoItemParaDevolucao emprestimos = do
+    putStrLn "[ REGISTRAR DEVOLUÇÃO ]"
+    putStrLn "Digite o código do item a devolver:"
+    codStr <- getLine
+    let codItem = read codStr :: Int
+    let mEmp = find (\e -> empCodigoItem e == codItem && dataEfetuadaDevolucao e == fromGregorian 0000 1 1) emprestimos
+    if mEmp == Nothing
+        then putStrLn "❌ Nenhum empréstimo ativo encontrado para este item."
+        else return ()
+    return mEmp
+
+verificarAtraso :: Emprestimo -> Day -> IO ()
+verificarAtraso emp hoje = do
+    let atraso = diffDays hoje (dataEsperadaDevolucao emp)
+    when (atraso > 0) $
+        putStrLn $ "⚠️ Devolução atrasada em " ++ show atraso ++ " dias"
+
+confirmarDevolucao :: Item -> Usuario -> IO Bool
+confirmarDevolucao item usuario = do
+    putStrLn $ "\n" ++ negrito "Confirme os dados da devolução:"
+    putStrLn $ negrito "Item: " ++ titulo item ++ " (" ++ show (tipo item) ++ ")"
+    putStrLn $ negrito "Usuário: " ++ nome usuario ++ " - Matrícula: " ++ matricula usuario
+    putStrLn "Confirmar devolução? (s/n)"
+    resp <- getLine
+    return (map toLower resp == "s")
+
+gerarDevolucao :: Int -> Day -> [Emprestimo] -> [Item] -> ([Emprestimo], [Item])
+gerarDevolucao cod hoje emprestimos itens =
+    let emprestimosAtualizados = map (atualizarDevolucao cod hoje) emprestimos
+        itensAtualizados = atualizarStatusItem cod Disponivel itens
+    in (emprestimosAtualizados, itensAtualizados)
+
+registrarDevolucao :: [Item] -> [Usuario] -> [Emprestimo] -> IO ([Emprestimo], [Item])
+registrarDevolucao itens usuarios emprestimos = do
+    mEmp <- obterCodigoItemParaDevolucao emprestimos
+    case mEmp of
+        Nothing -> return (emprestimos, itens)
+        Just emp -> do
+            hoje <- utctDay <$> getCurrentTime
+            verificarAtraso emp hoje
+
+            let mItem = find (\i -> codigo i == empCodigoItem emp) itens
+            let mUsuario = find (\u -> read (matricula u) == matriculaUsuario emp) usuarios
+
+            case (mItem, mUsuario) of
+                (Just item, Just usuario) -> do
+                    confirmado <- confirmarDevolucao item usuario
+                    if confirmado
+                        then do
+                            let (emprestimosAtualizados, itensAtualizados) =
+                                    gerarDevolucao (empCodigoItem emp) hoje emprestimos itens
+                            putStrLn "\n✅ Devolução registrada com sucesso!"
+                            putStrLn $ "📅 Data da devolução: " ++ show hoje
+                            return (emprestimosAtualizados, itensAtualizados)
+                        else do
+                            putStrLn "🚫 Devolução cancelada."
+                            return (emprestimos, itens)
+                _ -> do
+                    putStrLn "❌ Dados do item ou usuário não encontrados."
+                    return (emprestimos, itens)
+
+atualizarDevolucao :: Int -> Day -> Emprestimo -> Emprestimo
+atualizarDevolucao cod hoje emp
+    | empCodigoItem emp == cod = emp { dataEfetuadaDevolucao = hoje }
+    | otherwise = emp
