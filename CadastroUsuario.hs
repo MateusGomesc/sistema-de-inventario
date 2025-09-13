@@ -1,6 +1,6 @@
 module CadastroUsuario where
 
-Import Types (Usuario)
+import Types
 
 adicionarUsuario :: [Usuario] -> Usuario -> [Usuario]
 adicionarUsuario lista novo = novo : lista
