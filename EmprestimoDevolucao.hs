@@ -45,6 +45,7 @@ confirmarEmprestimo item usuario = do
     resp <- getLine
     return (map toLower resp == "s")
 
+
 gerarEmprestimo :: Item -> Usuario -> Day -> [Emprestimo] -> [Item] -> ([Emprestimo], [Item])
 gerarEmprestimo item usuario hoje emprestimos itens =
     let dias = case tipo item of
@@ -71,6 +72,7 @@ registrarEmprestimo itens usuarios emprestimos = do
                     confirmado <- confirmarEmprestimo item usuario
                     if confirmado
                         then do
+                            filaDeEspera <- removerDaFilaSeForPrimeiro (codigo item) (read (matricula usuario)) filaDeEspera
                             hoje <- utctDay <$> getCurrentTime
                             let (novosEmprestimos, itensAtualizados) =
                                     gerarEmprestimo item usuario hoje emprestimos itens
@@ -104,9 +106,6 @@ diasPorTipo _     = 5
 
 adicionarEmprestimo :: [Emprestimo] -> Emprestimo -> [Emprestimo]
 adicionarEmprestimo lista novo = novo : lista
-
-negrito :: String -> String
-negrito s = "\ESC[1m" ++ s ++ "\ESC[0m"
 
 
 obterCodigoItemParaDevolucao :: [Emprestimo] -> IO (Maybe Emprestimo)
@@ -142,6 +141,7 @@ gerarDevolucao cod hoje emprestimos itens =
         itensAtualizados = atualizarStatusItem cod Disponivel itens
     in (emprestimosAtualizados, itensAtualizados)
 
+
 registrarDevolucao :: [Item] -> [Usuario] -> [Emprestimo] -> IO ([Emprestimo], [Item])
 registrarDevolucao itens usuarios emprestimos = do
     mEmp <- obterCodigoItemParaDevolucao emprestimos
@@ -161,6 +161,7 @@ registrarDevolucao itens usuarios emprestimos = do
                         then do
                             let (emprestimosAtualizados, itensAtualizados) =
                                     gerarDevolucao (empCodigoItem emp) hoje emprestimos itens
+                            verificarFilaNaDevolucao (codigo item) filaDeEspera usuarios
                             putStrLn "\n✅ Devolução registrada com sucesso!"
                             putStrLn $ "📅 Data da devolução: " ++ show hoje
                             return (emprestimosAtualizados, itensAtualizados)
@@ -170,6 +171,7 @@ registrarDevolucao itens usuarios emprestimos = do
                 _ -> do
                     putStrLn "❌ Dados do item ou usuário não encontrados."
                     return (emprestimos, itens)
+
 
 atualizarDevolucao :: Int -> Day -> Emprestimo -> Emprestimo
 atualizarDevolucao cod hoje emp
