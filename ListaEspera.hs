@@ -1,12 +1,12 @@
 module ListaEspera where
 
-import System.IO
+import System.IO (hSetEncoding, stdout)
 import Types
 import Data.Char (toLower)
 import Data.List (find)
 import Data.Time.Calendar (fromGregorian)
-import Data.Time.Calendar.WeekDate (toWeekDate)
 import Control.Monad (when)
+
 
 obterCodigoItemParaEspera :: [Item] -> IO (Maybe Item)
 obterCodigoItemParaEspera itens = do
