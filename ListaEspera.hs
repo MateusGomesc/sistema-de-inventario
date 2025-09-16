@@ -1,12 +1,15 @@
 module ListaEspera where
 
-import System.IO (hSetEncoding, stdout)
 import Types
+import Listas
+import RegistrarLog
+import System.IO (hSetEncoding, stdout, utf8)
 import Data.Char (toLower)
 import Data.List (find)
+import Data.Time.Calendar
+import Data.Time.Clock
 import Data.Time.Calendar (fromGregorian)
 import Control.Monad (when)
-
 
 obterCodigoItemParaEspera :: [Item] -> IO (Maybe Item)
 obterCodigoItemParaEspera itens = do
@@ -68,28 +71,37 @@ incluirNaListaEspera itens usuarios esperas = do
                     if confirmado
                         then do
                             putStrLn "\n✅ Usuário incluído na lista de espera com sucesso!"
+                            registrarLog "Fila de espera (inclusão)" item usuario "Sucesso"
                             return esperasAtualizadas
                         else do
                             putStrLn "🚫 Inclusão cancelada."
+                            registrarLog "Fila de espera (inclusão)" item usuario "Cancelado"
                             return esperas
 
 negrito :: String -> String
 negrito s = "\ESC[1m" ++ s ++ "\ESC[0m"
 
-verificarFilaNaDevolucao :: Int -> [Espera] -> [Usuario] -> IO ()
-verificarFilaNaDevolucao codItem esperas usuarios =
-    case find (\e -> espCodigoItem e == codItem && not (null (lista e))) esperas of
+verificarFilaNaDevolucao :: Item -> [Espera] -> [Usuario] -> IO ()
+verificarFilaNaDevolucao item esperas usuarios =
+    case find (\e -> espCodigoItem e == codigo item && not (null (lista e))) esperas of
         Nothing -> return ()
         Just espera -> do
             let matPrimeiro = head (lista espera)
             case find (\u -> read (matricula u) == matPrimeiro) usuarios of
-                Just usuario -> putStrLn $ "📧 Item com fila de espera. O primeiro usuário na fila (" ++ nome usuario ++ ") foi notificado por email: " ++ email usuario
-                Nothing -> putStrLn "⚠️ Item com fila de espera, mas usuário não encontrado para notificação."
+                Just usuario -> do
+                    putStrLn $ "📧 Item com fila de espera. O primeiro usuário na fila (" ++ nome usuario ++ ") foi notificado por email: " ++ email usuario
+                    registrarLog "Fila de espera (notificação)" item usuario "Sucesso"
+                Nothing -> do
+                    putStrLn "⚠️ Item com fila de espera, mas usuário não encontrado para notificação."
+                    let usuarioFake = Usuario "Desconhecido" (show matPrimeiro) "sem@email.com"
+                    registrarLog "Fila de espera (notificação)" item usuarioFake "Erro - Usuário não encontrado"
 
 
-removerDaFilaSeForPrimeiro :: Int -> Int -> [Espera] -> IO [Espera]
-removerDaFilaSeForPrimeiro codItem matUsuario esperas =
-    case find (\e -> espCodigoItem e == codItem) esperas of
+removerDaFilaSeForPrimeiro :: Item -> Usuario -> [Espera] -> IO [Espera]
+removerDaFilaSeForPrimeiro item usuario esperas =
+    let codItem = codigo item
+        matUsuario = read (matricula usuario)
+    in case find (\e -> espCodigoItem e == codItem) esperas of
         Nothing -> return esperas
         Just espera ->
             if not (null (lista espera)) && head (lista espera) == matUsuario
@@ -97,7 +109,10 @@ removerDaFilaSeForPrimeiro codItem matUsuario esperas =
                     let novaFila = tail (lista espera)
                         esperasAtualizadas = map (\e -> if espCodigoItem e == codItem then e { lista = novaFila } else e) esperas
                     putStrLn "✅ Usuário era o primeiro da fila e foi removido da lista de espera."
+                    registrarLog "Fila de espera (remoção)" item usuario "Sucesso"
                     return esperasAtualizadas
                 else do
                     putStrLn "⚠️ Usuário não era o primeiro da fila. A posição na fila permanece."
+                    registrarLog "Fila de espera (remoção)" item usuario "Erro - Usuário não era o primeiro da fila"
                     return esperas
+
