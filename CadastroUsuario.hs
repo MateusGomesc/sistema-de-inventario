@@ -1,6 +1,9 @@
 module CadastroUsuario where
 
 import Types
+import System.IO
+import Data.List.Split (splitOn)
+import Control.Exception (catch, IOException)
 
 -- Função para adicionar usuário com validações
 adicionarUsuario :: [Usuario] -> Usuario -> Either String [Usuario]
@@ -23,12 +26,32 @@ listarUsuarios :: [Usuario] -> String
 listarUsuarios [] = "Nenhum usuário cadastrado."
 listarUsuarios usuarios = unlines (map formatar usuarios)
   where
-    formatar u = "Nome: " ++ nome u ++ " | Matrícula: " ++ show (matricula u) ++ " | E-mail: " ++ email u
+    formatar u = "Nome: " ++ nome u ++ " , Matrícula: " ++ show (matricula u) ++ " , E-mail: " ++ email u
 
 -- Criar usuário
 criarUsuario :: String -> String -> String -> Usuario
 criarUsuario n m e = Usuario {nome = n, matricula = m, email = e}
 
--- Função que salva a lista de usuários em um arquivo
-salvarUsuarios :: FilePath -> [Usuario] -> IO ()
-salvarUsuarios arquivo usuarios = writeFile arquivo (listarUsuarios usuarios)
+-- Salvar no CSV
+salvarUsuariosCSV :: FilePath -> [Usuario] -> IO ()
+salvarUsuariosCSV arquivo usuarios = do
+    let linhas = map (\u -> nome u ++ "," ++ matricula u ++ "," ++ email u) usuarios
+    writeFile arquivo (unlines linhas)
+    
+-- Ler do CSV
+lerUsuariosCSV :: FilePath -> IO [Usuario]
+lerUsuariosCSV arquivo = catch ler handleErro
+  where
+    ler = do
+        conteudo <- readFile arquivo
+        let linhas = filter (not . null) (lines conteudo)
+        return $ map linhaParaUsuario linhas
+    handleErro :: IOException -> IO [Usuario]
+    handleErro _ = return []  -- se não existir arquivo, retorna lista vazia
+
+    linhaParaUsuario :: String -> Usuario
+    linhaParaUsuario linha =
+        case splitOn "," linha of
+            [n, m, e] -> criarUsuario n m e
+            _         -> criarUsuario "" "" ""
+    
