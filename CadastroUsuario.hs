@@ -28,3 +28,7 @@ listarUsuarios usuarios = unlines (map formatar usuarios)
 -- Criar usuário
 criarUsuario :: String -> String -> String -> Usuario
 criarUsuario n m e = Usuario {nome = n, matricula = m, email = e}
+
+-- Função que salva a lista de usuários em um arquivo
+salvarUsuarios :: FilePath -> [Usuario] -> IO ()
+salvarUsuarios arquivo usuarios = writeFile arquivo (listarUsuarios usuarios)
