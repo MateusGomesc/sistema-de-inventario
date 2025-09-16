@@ -2,9 +2,12 @@ module Types where
 
 import Data.Time.Calendar(Day)
 
+type Matricula = Int
+type Codigo = Int
+
 data Usuario = Usuario {
         nome :: String,
-        matricula :: String,
+        matricula :: Matricula,
         email :: String
     } deriving (Show, Eq)
 
@@ -15,7 +18,7 @@ data StatusItem = Emprestado | Disponivel
     deriving(Show, Eq)
 
 data Item = Item{
-        codigo :: Int,   
+        codigo :: Codigo,   
         titulo :: String,   
         autor :: String,   
         ano :: Int,
@@ -28,8 +31,8 @@ data StatusEmprestimo = Devolvido | OnTime | Atrasado
     deriving(Show, Eq)
 
 data Emprestimo = Emprestimo {
-        empCodigoItem :: Int,
-        matriculaUsuario :: Int,
+        empCodigoItem :: Codigo,
+        matriculaUsuario :: Matricula,
         dataEmprestimo :: Day,
         dataEsperadaDevolucao :: Day,
         dataEfetuadaDevolucao :: Day
