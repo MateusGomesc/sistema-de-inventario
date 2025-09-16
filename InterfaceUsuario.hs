@@ -3,8 +3,8 @@ module InterfaceUsuario where
 import Types
 import CadastroUsuario 
 
-menuUsuarios :: [Usuario] -> IO ()
-menuUsuarios usuarios = do
+menuUsuarios :: FilePath -> [Usuario] -> IO ()
+menuUsuarios arquivo usuarios = do
     putStrLn "\n=============================="
     putStrLn "  Cadastro de Usuários"
     putStrLn "=============================="
@@ -24,26 +24,28 @@ menuUsuarios usuarios = do
             e <- getLine
             let novo = criarUsuario n m e
             case adicionarUsuario usuarios novo of
-                Left erro -> putStrLn erro >> menuUsuarios usuarios
+                Left erro -> putStrLn erro >> menuUsuarios arquivo usuarios
                 Right novaLista -> do
+                    salvarUsuariosCSV arquivo novaLista
                     putStrLn "Usuário adicionado com sucesso!"
-                    menuUsuarios novaLista
+                    menuUsuarios arquivo novaLista
 
         "2" -> do
             putStrLn "Digite a matrícula do usuário a remover:"
             m <- getLine
             case removerUsuario usuarios m of
-                Left erro -> putStrLn erro >> menuUsuarios usuarios
+                Left erro -> putStrLn erro >> menuUsuarios arquivo usuarios
                 Right novaLista -> do
+                    salvarUsuariosCSV arquivo novaLista
                     putStrLn "Usuário removido com sucesso!"
-                    menuUsuarios novaLista
+                    menuUsuarios arquivo novaLista
 
         "3" -> do
             putStrLn "\nUsuários cadastrados:"
             putStrLn (listarUsuarios usuarios)
-            menuUsuarios usuarios
+            menuUsuarios arquivo usuarios
 
         "4" -> putStrLn "Voltando ao menu principal..."
         _   -> do
             putStrLn "Opção inválida, tente novamente."
-            menuUsuarios usuarios
+            menuUsuarios arquivo usuarios
