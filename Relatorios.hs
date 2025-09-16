@@ -271,7 +271,7 @@ dbUsuarios = [ana, bruno, carla]
 dbEmprestimos = [emprestimoAna, emprestimoBruno, emprestimoCarla, emprestimoCarla2, devolucaoCarla]
 dbListasEspera = [listaEsperaLivro, listaEsperaFilme]
 
--- Como usar:
+-- Como usar: exemplos na hora de colocar no menu tem q usar com argumentos certos
 -- > listarEmprestimosAtivos dbEmprestimos dbItens dbUsuarios
 -- > historicoUsuario (matricula carla) dbEmprestimos dbItens dbUsuarios
 -- > relatorioItensComEspera dbListasEspera dbItens dbUsuarios
