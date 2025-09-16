@@ -5,7 +5,7 @@ import Types
 -- Função para adicionar usuário com validações
 adicionarUsuario :: [Usuario] -> Usuario -> Either String [Usuario]
 adicionarUsuario usuarios novo
-    | matriculaDuplicada = Left ("Erro: matrícula \"" ++ matricula novo ++ "\" já cadastrada.")
+    | matriculaDuplicada = Left ("Erro: matrícula \"" ++ show (matricula novo) ++ "\" já cadastrada.")
     | emailInvalido      = Left ("Erro: e-mail \"" ++ email novo ++ "\" está mal formatado.")
     | otherwise          = Right (novo : usuarios)
   where
@@ -15,7 +15,7 @@ adicionarUsuario usuarios novo
 -- Função para remover usuário pela matrícula    
 removerUsuario :: [Usuario] -> String -> Either String [Usuario]
 removerUsuario usuarios mat
-    | any (\u -> matricula u == mat) usuarios = Right (filter (\u -> matricula u /= mat) usuarios)
+    | any (\u -> show (matricula u) == mat) usuarios = Right (filter (\u -> show (matricula u) /= mat) usuarios)
     | otherwise = Left ("Erro: matrícula \"" ++ mat ++ "\" não encontrada.")
     
 -- Função para listar usuários
@@ -23,4 +23,4 @@ listarUsuarios :: [Usuario] -> String
 listarUsuarios [] = "Nenhum usuário cadastrado."
 listarUsuarios usuarios = unlines (map formatar usuarios)
   where
-    formatar u = "Nome: " ++ nome u ++ " | Matrícula: " ++ matricula u ++ " | E-mail: " ++ email u
+    formatar u = "Nome: " ++ nome u ++ " | Matrícula: " ++ show (matricula u) ++ " | E-mail: " ++ email u

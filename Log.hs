@@ -16,3 +16,8 @@ logOperation descricao = do
     handle <- openFile logFile AppendMode
     hPutStrLn handle msg
     hClose handle
+
+mostrarLog :: IO ()
+mostrarLog = do
+    conteudo <- readFile logFile
+    putStrLn conteudo

@@ -3,6 +3,7 @@ module Interface where
 import Types
 import Validation (valida)
 import Edit ( editarUsuario, editarItem )
+import Log ( mostrarLog )
 
 exibirOpções :: [String] -> IO ()
 exibirOpções opções = do
@@ -73,20 +74,58 @@ lacoMenuCadastroItem = do
             putStrLn "Opção Inválida!"
             lacoMenuCadastroItem
 
-lacoMenuCadastroUsuario :: IO ()
-lacoMenuCadastroUsuario = do
+-- lacoMenuCadastroUsuario :: IO ()
+-- lacoMenuCadastroUsuario = do
+--     opção <- menu "Cadastro de usuário" [
+--         "1 - Adicionar novo usuário",
+--         "2 - Remover usuário",
+--         "3 - Listar usuários cadastrados",
+--         "0 - Voltar ao menu principal"]
+--     case opção of
+--         1 -> return ()
+--         2 -> return ()
+--         3 -> return ()
+--         0 -> lacoMenuPrincipal
+--         _ -> do
+--             putStrLn "Opção Inválida!"
+--             lacoMenuCadastroUsuario
+
+lacoMenuCadastroUsuario :: [Usuario] -> IO ()
+lacoMenuCadastroUsuario usuarios = do
     opção <- menu "Cadastro de usuário" [
-        "1 - Adicionar novo usuário",
-        "2 - Remover usuário",
-        "3 - Listar usuários cadastrados",
-        "0 - Voltar ao menu principal"]
+         "1 - Adicionar novo usuário",
+         "2 - Remover usuário",
+         "3 - Listar usuários cadastrados",
+         "0 - Voltar ao menu principal"]
     case opção of
-        1 -> return ()
-        2 -> return ()
-        3 -> return ()
-        0 -> lacoMenuPrincipal
-        _ -> do
-            putStrLn "Opção Inválida!"
+        1 -> do
+            putStrLn "Digite o nome:"
+            n <- getLine
+            putStrLn "Digite a matrícula:"
+            m <- getLine
+            putStrLn "Digite o e-mail:"
+            e <- getLine
+            let novo = criarUsuario n m e
+            case adicionarUsuario usuarios novo of
+                Left erro -> putStrLn erro >> menuUsuarios usuarios
+                Right novaLista -> do
+                    putStrLn "Usuário adicionado com sucesso!"
+                    menuUsuarios novaLista
+        2 -> do
+            putStrLn "Digite a matrícula do usuário a remover:"
+            m <- getLine
+            case removerUsuario usuarios m of
+                Left erro -> putStrLn erro >> menuUsuarios usuarios
+                Right novaLista -> do
+                    putStrLn "Usuário removido com sucesso!"
+                    menuUsuarios novaLista
+        3 -> do
+            putStrLn "\nUsuários cadastrados:"
+            putStrLn (listarUsuarios usuarios)
+            menuUsuarios usuarios
+        4 -> putStrLn "Voltando ao menu principal..."
+        _   -> do
+            putStrLn "Opção inválida, tente novamente."
             lacoMenuCadastroUsuario
 
 lacoMenuEmprestimoDevolucao :: IO ()
@@ -158,8 +197,12 @@ lacoMenuEdicao = do
         "2 - Editar usuário",
         "0 - Voltar ao menu principal"]
     case opção of
-        1 -> editarItem
-        2 -> editarUsuario
+        1 -> do
+            editarItem
+            lacoMenuEdicao
+        2 -> do
+            editarUsuario
+            lacoMenuEdicao
         0 -> lacoMenuPrincipal
         _ -> do
             putStrLn "Opção Inválida!"
@@ -186,7 +229,9 @@ lacoMenuAuditoriaHistorico = do
         "2 - Exibir histórico de alterações",
         "0 - Voltar ao menu principal"]
     case opção of
-        1 -> return ()
+        1 -> do
+            mostrarLog
+            lacoMenuAuditoriaHistorico
         2 -> return ()
         0 -> lacoMenuPrincipal
         _ -> do
