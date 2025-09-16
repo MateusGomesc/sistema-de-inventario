@@ -4,14 +4,16 @@ module EmprestimoDevolucao where
 --Chamar registrarDevolucao com: (emprestimos, itens) <- registrarDevolucao itens usuarios emprestimos
 
 import Types
-import System.IO
-import Data.Time.Calendar
-import Data.Time.Clock
-import Data.List (find)
+import Listas (usuarios, itens, filaDeEspera)
+import ListaEspera (removerDaFilaSeForPrimeiro)
+import RegistrarLog (registrarLog)
+import System.IO (putStrLn, getLine)
+import Data.Time.Clock (utctDay, getCurrentTime)
+import Data.Time.Calendar (Day, addDays, fromGregorian)
 import Data.Time.Calendar.WeekDate (toWeekDate)
-import Data.Time.Calendar (fromGregorian)
-import Control.Monad (when)
+import Data.List (find)
 import Data.Char (toLower)
+import Control.Monad (when)
 
 obterCodigoItem :: [Item] -> IO (Maybe Item)
 obterCodigoItem itens = do
@@ -45,7 +47,6 @@ confirmarEmprestimo item usuario = do
     resp <- getLine
     return (map toLower resp == "s")
 
-
 gerarEmprestimo :: Item -> Usuario -> Day -> [Emprestimo] -> [Item] -> ([Emprestimo], [Item])
 gerarEmprestimo item usuario hoje emprestimos itens =
     let dias = case tipo item of
@@ -67,27 +68,31 @@ registrarEmprestimo itens usuarios emprestimos = do
             case mUsuario of
                 Nothing -> do
                     putStrLn "❌ Usuário não encontrado."
+                    let usuarioFake = Usuario "Desconhecido" "0000" "sem@email.com"
+                    registrarLog "Empréstimo" item usuarioFake "Erro - usuário inválido"
                     return (emprestimos, itens)
                 Just usuario -> do
                     confirmado <- confirmarEmprestimo item usuario
                     if confirmado
                         then do
-                            filaDeEspera <- removerDaFilaSeForPrimeiro (codigo item) (read (matricula usuario)) filaDeEspera
+                            --filaDeEspera <- removerDaFilaSeForPrimeiro (codigo item) (read (matricula usuario)) filaDeEspera
+                            filaDeEspera <- removerDaFilaSeForPrimeiro item usuario filaDeEspera
                             hoje <- utctDay <$> getCurrentTime
                             let (novosEmprestimos, itensAtualizados) =
                                     gerarEmprestimo item usuario hoje emprestimos itens
                             putStrLn "\n✅ Empréstimo registrado com sucesso!"
                             putStrLn $ "📅 Data do empréstimo: " ++ show hoje
                             putStrLn $ "📅 Data limite para devolução: " ++ show (dataEsperadaDevolucao $ head novosEmprestimos)
+                            registrarLog "Empréstimo" item usuario "Sucesso"
                             return (novosEmprestimos, itensAtualizados)
                         else do
                             putStrLn "🚫 Empréstimo cancelado."
+                            registrarLog "Empréstimo" item usuario "Cancelado"
                             return (emprestimos, itens)
 
 atualizarStatusItem :: Int -> StatusItem -> [Item] -> [Item]
 atualizarStatusItem cod novoStatus =
     map (\item -> if codigo item == cod then item { status = novoStatus } else item)
-
 
 -- Adiciona N dias úteis (ignorando finais de semana)
 adicionarDiasUteis :: Day -> Int -> Day
@@ -107,7 +112,6 @@ diasPorTipo _     = 5
 adicionarEmprestimo :: [Emprestimo] -> Emprestimo -> [Emprestimo]
 adicionarEmprestimo lista novo = novo : lista
 
-
 obterCodigoItemParaDevolucao :: [Emprestimo] -> IO (Maybe Emprestimo)
 obterCodigoItemParaDevolucao emprestimos = do
     putStrLn "[ REGISTRAR DEVOLUÇÃO ]"
@@ -116,9 +120,13 @@ obterCodigoItemParaDevolucao emprestimos = do
     let codItem = read codStr :: Int
     let mEmp = find (\e -> empCodigoItem e == codItem && dataEfetuadaDevolucao e == fromGregorian 0000 1 1) emprestimos
     if mEmp == Nothing
-        then putStrLn "❌ Nenhum empréstimo ativo encontrado para este item."
-        else return ()
-    return mEmp
+        then do
+            putStrLn "❌ Nenhum empréstimo ativo encontrado para este item."
+            let itemFake = Item codItem "Desconhecido" "" 0 Livro Disponivel
+            let usuarioFake = Usuario "Desconhecido" "0000" "sem@email.com"
+            registrarLog "Devolução" itemFake usuarioFake "Erro - empréstimo inválido"
+            return Nothing
+        else return mEmp
 
 verificarAtraso :: Emprestimo -> Day -> IO ()
 verificarAtraso emp hoje = do
@@ -141,7 +149,6 @@ gerarDevolucao cod hoje emprestimos itens =
         itensAtualizados = atualizarStatusItem cod Disponivel itens
     in (emprestimosAtualizados, itensAtualizados)
 
-
 registrarDevolucao :: [Item] -> [Usuario] -> [Emprestimo] -> IO ([Emprestimo], [Item])
 registrarDevolucao itens usuarios emprestimos = do
     mEmp <- obterCodigoItemParaDevolucao emprestimos
@@ -161,17 +168,18 @@ registrarDevolucao itens usuarios emprestimos = do
                         then do
                             let (emprestimosAtualizados, itensAtualizados) =
                                     gerarDevolucao (empCodigoItem emp) hoje emprestimos itens
-                            verificarFilaNaDevolucao (codigo item) filaDeEspera usuarios
+                            verificarFilaNaDevolucao item filaDeEspera usuarios
                             putStrLn "\n✅ Devolução registrada com sucesso!"
                             putStrLn $ "📅 Data da devolução: " ++ show hoje
+                            registrarLog "Devolução" item usuario "Sucesso"
                             return (emprestimosAtualizados, itensAtualizados)
                         else do
                             putStrLn "🚫 Devolução cancelada."
+                            registrarLog "Devolução" item usuario "Cancelado"
                             return (emprestimos, itens)
                 _ -> do
                     putStrLn "❌ Dados do item ou usuário não encontrados."
                     return (emprestimos, itens)
-
 
 atualizarDevolucao :: Int -> Day -> Emprestimo -> Emprestimo
 atualizarDevolucao cod hoje emp
