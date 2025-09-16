@@ -23,6 +23,4 @@ listarUsuarios :: [Usuario] -> String
 listarUsuarios [] = "Nenhum usuário cadastrado."
 listarUsuarios usuarios = unlines (map formatar usuarios)
   where
-    formatar u = "Nome: " ++ nome u ++
-                 " | Matrícula: " ++ matricula u ++
-                 " | E-mail: " ++ email u
+    formatar u = "Nome: " ++ nome u ++ " | Matrícula: " ++ matricula u ++ " | E-mail: " ++ email u
