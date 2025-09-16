@@ -33,7 +33,7 @@ menuCadastro listaUsuarios = do
       putStrLn "Usuário removido (se existia) com sucesso!"
       menuCadastro listaAtualizada
     "3" -> do
-    listarUsuarios :: [Usuario] -> (Usuario -> [Char]) -> IO ()
+      listarUsuarios :: [Usuario] -> (Usuario -> [Char]) -> IO ()
       menuCadastro listaUsuarios
     "4" -> do
       putStrLn "Voltando ao menu principal..."

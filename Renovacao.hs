@@ -5,7 +5,7 @@ module Renovacao where
 import Types
 import Listas 
 import ListaEspera
-import EmprestimosDevolucoes
+import EmprestimoDevolucao
 import RegistrarLog 
 import System.IO (putStrLn, getLine)
 import Data.Time.Clock (utctDay, getCurrentTime)
