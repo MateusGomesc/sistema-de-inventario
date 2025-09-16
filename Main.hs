@@ -1,4 +1,6 @@
 module Main where
 
+import Interface ( lacoMenuPrincipal )
+
 main :: IO ()
-main = return ()
+main = lacoMenuPrincipal
