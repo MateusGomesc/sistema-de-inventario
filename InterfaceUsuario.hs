@@ -1,7 +1,8 @@
-module InterfaceUsuario where
+module Main where
 
-import Types
-import CadastroUsuario 
+import System.IO          
+import Data.List.Split (splitOn) 
+import Control.Exception (catch, IOException)
 
 menuUsuarios :: FilePath -> [Usuario] -> IO ()
 menuUsuarios arquivo usuarios = do
