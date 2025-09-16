@@ -2,6 +2,7 @@ module CadastroUsuario where
 
 import Types
 
+-- Função para adicionar usuário com validações
 adicionarUsuario :: [Usuario] -> Usuario -> Either String [Usuario]
 adicionarUsuario usuarios novo
     | matriculaDuplicada = Left ("Erro: matrícula \"" ++ matricula novo ++ "\" já cadastrada.")
@@ -11,11 +12,13 @@ adicionarUsuario usuarios novo
     matriculaDuplicada = any (\u -> matricula u == matricula novo) usuarios
     emailInvalido = not ('@' `elem` email novo && '.' `elem` email novo)
     
+-- Função para remover usuário pela matrícula    
 removerUsuario :: [Usuario] -> String -> Either String [Usuario]
 removerUsuario usuarios mat
     | any (\u -> matricula u == mat) usuarios = Right (filter (\u -> matricula u /= mat) usuarios)
     | otherwise = Left ("Erro: matrícula \"" ++ mat ++ "\" não encontrada.")
-
+    
+-- Função para listar usuários
 listarUsuarios :: [Usuario] -> String
 listarUsuarios [] = "Nenhum usuário cadastrado."
 listarUsuarios usuarios = unlines (map formatar usuarios)
