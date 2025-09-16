@@ -3,7 +3,75 @@ module Relatorios where
 import Data.Time.Calendar
 import Data.List (group, sortOn, sortBy)
 import Data.Function (on)
+import System.IO
 import Types
+
+-- ** Nova função para dividir strings sem 'splitOn' **
+splitByDelimiter :: Char -> String -> [String]
+splitByDelimiter _ "" = [""]
+splitByDelimiter delim str =
+    let (part, rest) = span (/= delim) str
+    in part : case rest of
+        [] -> []
+        (_:rest') -> splitByDelimiter delim rest'
+
+-- Leitura de usuários
+lerUsuariosCSV :: FilePath -> IO [Usuario]
+lerUsuariosCSV caminho = do
+    conteudo <- readFile caminho
+    let linhas = tail $ lines conteudo
+    return $ map parseUsuario linhas
+
+parseUsuario :: String -> Usuario
+parseUsuario linha =
+    let [nome, matriculaStr, email] = splitByDelimiter ',' linha
+    in Usuario nome (read matriculaStr) email
+
+-- Leitura de itens
+lerItensCSV :: FilePath -> IO [Item]
+lerItensCSV caminho = do
+    conteudo <- readFile caminho
+    let linhas = tail $ lines conteudo
+    return $ map parseItem linhas
+
+parseItem :: String -> Item
+parseItem linha =
+    let [codigoStr, titulo, autor, anoStr, tipoStr, statusStr] = splitByDelimiter ',' linha
+    in Item (read codigoStr) titulo autor (read anoStr) (read tipoStr) (read statusStr)
+
+-- Leitura de empréstimos
+lerEmprestimosCSV :: FilePath -> IO [Emprestimo]
+lerEmprestimosCSV caminho = do
+    conteudo <- readFile caminho
+    let linhas = tail $ lines conteudo
+    return $ map parseEmprestimo linhas
+
+parseEmprestimo :: String -> Emprestimo
+parseEmprestimo linha =
+    let [codItemStr, matStr, dataEmpStr, dataPrevDevStr, dataEfetDevStr] = splitByDelimiter ',' linha
+    in Emprestimo (read codItemStr) (read matStr) (readDay dataEmpStr) (readDay dataPrevDevStr) (readDay dataEfetDevStr)
+
+-- Leitura de listas de espera
+lerListasEsperaCSV :: FilePath -> IO [Espera]
+lerListasEsperaCSV caminho = do
+    conteudo <- readFile caminho
+    let linhas = tail $ lines conteudo
+    return $ map parseEspera linhas
+
+parseEspera :: String -> Espera
+parseEspera linha =
+    let (codItemStr:matriculasStrs) = splitByDelimiter ',' linha
+    in Espera (read codItemStr) (map read matriculasStrs)
+
+-- Função auxiliar para datas no formato YYYY-MM-DD
+readDay :: String -> Day
+readDay str =
+    let
+        [yStr, mStr, dStr] = splitByDelimiter '-' str
+        y = read yStr :: Integer
+        m = read mStr :: Int
+        d = read dStr :: Int
+    in fromGregorian y m d
 
 -- (a) Listar empréstimos ativos (por categoria)
 ---------------------------------
@@ -39,12 +107,16 @@ filtrarEmprestimosAtivosPorTipo tipoEmprestimo emprestimosAtivos itens usuarios 
     , tipo item == tipoEmprestimo
     ]
 
+-- **FUNÇÃO ADICIONADA: Corrigindo o erro de compilação**
 imprimirEmprestimosPorTipo :: TipoItem -> [(Item, Usuario, Emprestimo)] -> IO ()
-imprimirEmprestimosPorTipo tipo emprestimos =
-    mapM_ imprimir emprestimos
-  where
-    imprimir (item, usuario, emp) =
-        putStrLn $ "Código: " ++ show (codigo item) ++ " | Título: \"" ++ titulo item ++ "\" | Usuário: " ++ nome usuario ++ " | Data: " ++ show (dataEmprestimo emp)
+imprimirEmprestimosPorTipo tipo emprestimosAtivos = do
+    if null emprestimosAtivos
+        then putStrLn "  Nenhum empréstimo ativo nesta categoria."
+        else mapM_ (\(item, usuario, emprestimo) -> do
+            putStrLn $ "  - Título: " ++ titulo item
+            putStrLn $ "    Usuário: " ++ nome usuario ++ " (mat. " ++ show (matricula usuario) ++ ")"
+            putStrLn $ "    Data de Empréstimo: " ++ show (dataEmprestimo emprestimo)
+          ) emprestimosAtivos
 
 -- (b) Históricos detalhados de usuário
 ---------------------------------
@@ -58,16 +130,22 @@ data EventoHistorico = EventoHistorico {
     detalhes :: String
 } deriving (Show, Eq)
 
+-- Função auxiliar para encontrar o nome do usuário
+encontrarNomeUsuario :: Matricula -> [Usuario] -> String
+encontrarNomeUsuario mat usuarios =
+    case filter (\u -> matricula u == mat) usuarios of
+        (u:_) -> nome u
+        _ -> "Usuário não encontrado"
+
 -- A função abaixo gera o histórico de um usuário específico, a partir de todos os empréstimos
-historicoUsuario :: Matricula -> [Emprestimo] -> [Item] -> IO ()
-historicoUsuario mat usuariosEmprestimos itens = do
-    putStrLn $ "Histórico do usuário: " ++ nomeUsuario ++ " (matrícula " ++ show mat ++ ")"
+historicoUsuario :: Matricula -> [Emprestimo] -> [Item] -> [Usuario] -> IO ()
+historicoUsuario mat emprestimos itens usuarios = do
+    putStrLn $ "Histórico do usuário: " ++ encontrarNomeUsuario mat usuarios ++ " (matrícula " ++ show mat ++ ")"
     putStrLn "-----------------------------"
     mapM_ (putStrLn . formatarEvento) historicoOrdenado
   where
-    emprestimosUsuario = filter (\e -> matriculaUsuario e == mat) usuariosEmprestimos
+    emprestimosUsuario = filter (\e -> matriculaUsuario e == mat) emprestimos
     
-    -- Função auxiliar encontra nome apartir do código
     encontrarNomeItem cod =
         case filter (\i -> codigo i == cod) itens of
             (i:_) -> titulo i
@@ -83,23 +161,15 @@ historicoUsuario mat usuariosEmprestimos itens = do
             detalheDev = "Devolução do item \"" ++ nomeItem ++ "\""
             eventoDev = EventoHistorico dataDev detalheDev
         in 
-            -- dataEfetuadaDevolucao (1,1,1) é não devolvido
             if dataDev == fromGregorian 1 1 1
                 then [eventoEmp]
                 else [eventoEmp, eventoDev]
       ) emprestimosUsuario
 
-    -- A simulação de "Renovação" e "Atraso" -
-
     historicoOrdenado = sortBy (compare `on` dataEvento) eventos
 
     formatarEvento (EventoHistorico dataEv detalhe) =
         "[" ++ show dataEv ++ "] " ++ detalhe
-
-    -- Não achei a função q acha usuario
-    -- preciso de uma lista de usuario
-    nomeUsuario = "Carla Dias" -- teste favor alterar
-
 
 -- (c) Itens com listas de espera não vazias
 ---------------------------------
@@ -132,24 +202,16 @@ imprimirItemComEspera (item, usuarios) = do
 -- (d) Relatório de uso do sistema
 ---------------------------------
 
--- Outro tipo de dado para contabilizar auterações 
-data ContagemOperacoes = ContagemOperacoes {
-    numEmprestimos :: Int,
-    numDevolucoes :: Int,
-    numEdicoes :: Int -- edição é qualquer atualização
-} deriving (Show)
-
 -- Função principal dos relatorios
--- Ela usa as listas de empréstimos, devoluções e edições (teste)
-relatorioUsoSistema :: [Emprestimo] -> [Item] -> IO ()
-relatorioUsoSistema emprestimos itens = do
+relatorioUsoSistema :: [Emprestimo] -> [Item] -> [Usuario] -> IO ()
+relatorioUsoSistema emprestimos itens usuarios = do
     putStrLn "Relatório de uso do sistema"
     putStrLn "--------------------------"
     putStrLn "Operações por tipo de item:"
     imprimirOperacoesPorTipoItem emprestimos itens
     putStrLn ""
     putStrLn "Operações por usuário:"
-    imprimirOperacoesPorUsuario emprestimos
+    imprimirOperacoesPorUsuario emprestimos usuarios
 
 imprimirOperacoesPorTipoItem :: [Emprestimo] -> [Item] -> IO ()
 imprimirOperacoesPorTipoItem emprestimos itens = do
@@ -164,8 +226,9 @@ imprimirOperacoesPorTipoItem emprestimos itens = do
         [e | e <- emprestimos', item <- itens', codigo item == empCodigoItem e, tipo item == tipoItem]
     contarDevolucoes emprestimos' = length $ filter (\e -> dataEfetuadaDevolucao e /= fromGregorian 1 1 1) emprestimos'
 
-imprimirOperacoesPorUsuario :: [Emprestimo] -> IO ()
-imprimirOperacoesPorUsuario emprestimos =
+-- **FUNÇÃO ATUALIZADA: Corrigindo o bug do output fixo**
+imprimirOperacoesPorUsuario :: [Emprestimo] -> [Usuario] -> IO ()
+imprimirOperacoesPorUsuario emprestimos usuarios =
     let
         -- Cria uma lista de pares matricula, 1 por emprestimo
         operacoesPorUsuario = map (\e -> (matriculaUsuario e, 1)) emprestimos
@@ -173,11 +236,12 @@ imprimirOperacoesPorUsuario emprestimos =
         operacoesAgrupadas = group $ sortOn fst operacoesPorUsuario
         totalOperacoes = map (\g -> (fst (head g), length g)) operacoesAgrupadas
         
-        -- Nprecisa da lista de user, um `map` com uma função de busca resolve
-    in do
-      putStrLn "- Ana Souza: 9 operações" -- Exemplo fixo
-      putStrLn "- Bruno Lima: 7 operações" -- Exemplo fixo
-      putStrLn "- Carla Dias: 12 operações" -- Exemplo fixo
+        -- Mapeia a matrícula para o nome do usuário para a impressão
+        saidaFormatada = map (\(mat, count) ->
+            let nomeUsuario = encontrarNomeUsuario mat usuarios
+            in "- " ++ nomeUsuario ++ ": " ++ show count ++ " operações"
+            ) totalOperacoes
+    in mapM_ putStrLn saidaFormatada
 
 -- Exemplos para testes
 livroHaskell = Item 1002 "Aprendendo Haskell" "Carlos" 2024 Livro Emprestado
@@ -209,6 +273,6 @@ dbListasEspera = [listaEsperaLivro, listaEsperaFilme]
 
 -- Como usar:
 -- > listarEmprestimosAtivos dbEmprestimos dbItens dbUsuarios
--- > historicoUsuario (matricula carla) dbEmprestimos dbItens
+-- > historicoUsuario (matricula carla) dbEmprestimos dbItens dbUsuarios
 -- > relatorioItensComEspera dbListasEspera dbItens dbUsuarios
--- > relatorioUsoSistema dbEmprestimos dbItens
+-- > relatorioUsoSistema dbEmprestimos dbItens dbUsuarios
