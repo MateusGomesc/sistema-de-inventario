@@ -6,7 +6,7 @@ import Data.Function (on)
 import System.IO
 import Types
 
--- ** Nova função para dividir strings sem 'splitOn' **
+-- tipo split on
 splitByDelimiter :: Char -> String -> [String]
 splitByDelimiter _ "" = [""]
 splitByDelimiter delim str =
@@ -107,7 +107,7 @@ filtrarEmprestimosAtivosPorTipo tipoEmprestimo emprestimosAtivos itens usuarios 
     , tipo item == tipoEmprestimo
     ]
 
--- **FUNÇÃO ADICIONADA: Corrigindo o erro de compilação**
+-- **teste para correção de erro de tipo**
 imprimirEmprestimosPorTipo :: TipoItem -> [(Item, Usuario, Emprestimo)] -> IO ()
 imprimirEmprestimosPorTipo tipo emprestimosAtivos = do
     if null emprestimosAtivos
@@ -226,7 +226,6 @@ imprimirOperacoesPorTipoItem emprestimos itens = do
         [e | e <- emprestimos', item <- itens', codigo item == empCodigoItem e, tipo item == tipoItem]
     contarDevolucoes emprestimos' = length $ filter (\e -> dataEfetuadaDevolucao e /= fromGregorian 1 1 1) emprestimos'
 
--- **FUNÇÃO ATUALIZADA: Corrigindo o bug do output fixo**
 imprimirOperacoesPorUsuario :: [Emprestimo] -> [Usuario] -> IO ()
 imprimirOperacoesPorUsuario emprestimos usuarios =
     let
