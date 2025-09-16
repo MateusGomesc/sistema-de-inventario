@@ -47,7 +47,7 @@ lerUsuariosCSV arquivo = catch ler handleErro
         let linhas = filter (not . null) (lines conteudo)
         return $ map linhaParaUsuario linhas
     handleErro :: IOException -> IO [Usuario]
-    handleErro _ = return []  -- se não existir arquivo, retorna lista vazia
+    handleErro _ = return [] 
 
     linhaParaUsuario :: String -> Usuario
     linhaParaUsuario linha =
