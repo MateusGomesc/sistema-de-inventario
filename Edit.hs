@@ -5,6 +5,7 @@ import Text.Read ( readMaybe )
 import Data.List(find, isInfixOf)
 import Control.Exception(evaluate)
 import Data.Char(toLower)
+import Log
 
 prompt :: String -> IO String
 prompt msg = do
@@ -201,6 +202,7 @@ confirmarEAtualizarUser numLinha usrAtualizado linhas = do
             let novoConteudo = unlines (substituirLinha numLinha novaLinha linhas)
             writeFile "Files/users.csv" novoConteudo
             putStrLn "Usuário atualizado com sucesso!"
+            logOperation $ "Usuário " ++ nome usrAtualizado ++ " atualizado."
         else putStrLn "Edição cancelada pelo usuário."
 
 confirmarEAtualizarItem :: Int -> Item -> [String] -> IO ()
@@ -212,4 +214,5 @@ confirmarEAtualizarItem numLinha itemAtualizado linhas = do
             let novoConteudo = unlines (substituirLinha numLinha novaLinha linhas)
             writeFile "Files/itens.csv" novoConteudo
             putStrLn "Item atualizado com sucesso!"
+            logOperation $ "Item " ++ titulo itemAtualizado ++ " atualizado."
         else putStrLn "Edição cancelada pelo usuário."
