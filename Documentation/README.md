@@ -185,3 +185,95 @@ Recebe o número da linha, o item atualizado e as linhas do arquivo. <br/>
 Solicita confirmação ao usuário. <br/>
 Se confirmado, substitui a linha no arquivo e salva. <br/>
 Registra a operação no log. <br/>
+
+### Registrar Empréstimo
+
+```haskell
+obterCodigoItem :: [Item] -> IO (Maybe Item)
+```
+Solicita ao usuário o código de um item e retorna o item correspondente se estiver disponível. <br/>
+Retorna Nothing se o item não existir ou estiver indisponível. <br/>
+
+```haskell
+obterMatriculaUsuario :: [Usuario] -> IO (Maybe Usuario)
+```
+Solicita ao usuário a matrícula e retorna o Usuario correspondente se encontrado. <br/>
+Retorna Nothing se a matrícula não estiver cadastrada. <br/>
+
+```haskell
+gerarEmprestimo :: Item -> Usuario -> Day -> [Emprestimo] -> [Item] -> ([Emprestimo], [Item])
+```
+Cria um novo empréstimo com data limite calculada conforme o tipo do item. <br/>
+Atualiza o status do item para Emprestado. <br/>
+Retorna a nova lista de empréstimos e itens atualizados. <br/>
+
+```haskell
+registrarEmprestimo :: [Item] -> [Usuario] -> [Emprestimo] -> IO ([Emprestimo], [Item])
+```
+Função principal com fluxo comlpeto para registrar um empréstimo: <br/>
+1. Solicita código do item e matrícula do usuário. <br/>
+2. Verifica disponibilidade e existência. <br/>
+3. Confirma dados. <br/>
+4. Atualiza listas e registra log. <br/>
+
+```haskell
+atualizarStatusItem :: Int -> StatusItem -> [Item] -> [Item]
+```
+Atualiza o status de um item específico na lista de itens. <br/>
+
+```haskell
+adicionarDiasUteis :: Day -> Int -> Day
+```
+Calcula a data de devolução futura adicionando apenas dias úteis (ignora sábados e domingos). <br/>
+
+```haskell
+diasPorTipo :: TipoItem -> Int
+```
+Define o número de dias de empréstimo conforme o tipo do item: <br/>
+ - Filmes e jogos: 2 dias úteis <br/>
+ - Livros: 5 dias úteis <br/>
+
+```haskell
+adicionarEmprestimo :: [Emprestimo] -> Emprestimo -> [Emprestimo]
+```
+Adiciona um novo empréstimo à lista existente. <br/>
+
+### Registrar Devolução
+
+```haskell
+obterCodigoItemParaDevolucao :: [Emprestimo] -> IO (Maybe Emprestimo)
+```
+Solicita o código do item a ser devolvido e retorna o empréstimo ativo correspondente. <br/>
+Retorna Nothing se não houver empréstimo ativo. <br/>
+
+```haskell
+verificarAtraso :: Emprestimo -> Day -> IO ()
+```
+Verifica se o empréstimo está atrasado em relação à data esperada de devolução. <br/>
+Exibe alerta se houver atraso. <br/>
+
+```haskell
+confirmarDevolucao :: Item -> Usuario -> IO Bool
+```
+Exibe os dados do item e do usuário e solicita confirmação da devolução. <br/>
+Retorna True se o usuário confirmar com "s". <br/>
+
+```haskell
+gerarDevolucao :: Int -> Day -> [Emprestimo] -> [Item] -> ([Emprestimo], [Item])
+```
+Atualiza a data de devolução do empréstimo e o status do item para Disponivel. <br/>
+
+```haskell
+registrarDevolucao :: [Item] -> [Usuario] -> [Emprestimo] -> IO ([Emprestimo], [Item])
+```
+Função principal com o fluxo completo para registrar uma devolução: <br/>
+1. Solicita código do item. <br/>
+2. Verifica empréstimo ativo. <br/>
+3. Confirma dados. <br/>
+4. Atualiza listas e registra log. <br/>
+5. Verifica fila de espera e notifica o próximo usuário se necessário. <br/>
+
+```haskell
+atualizarDevolucao :: Int -> Day -> Emprestimo -> Emprestimo
+```
+Atualiza a data efetiva de devolução de um empréstimo específico. <br/>
