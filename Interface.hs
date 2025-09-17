@@ -4,6 +4,8 @@ import Types
 import Validation (valida)
 import Edit ( editarUsuario, editarItem )
 import Log ( mostrarLog )
+import CadastroUsuario
+    ( adicionarUsuario, removerUsuario, listarUsuarios, criarUsuario )
 
 exibirOpções :: [String] -> IO ()
 exibirOpções opções = do

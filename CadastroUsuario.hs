@@ -27,4 +27,4 @@ listarUsuarios usuarios = unlines (map formatar usuarios)
 
 -- Criar usuário
 criarUsuario :: String -> String -> String -> Usuario
-criarUsuario n m e = Usuario {nome = n, matricula = m, email = e}
+criarUsuario n m e = Usuario {nome = n, matricula = (read m) :: Int, email = e}
