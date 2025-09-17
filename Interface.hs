@@ -4,6 +4,7 @@ import Types
 import Validation (valida)
 import Edit ( editarUsuario, editarItem )
 import Log ( mostrarLog )
+import CadastroItems
 import CadastroUsuario
     ( adicionarUsuario, removerUsuario, listarUsuarios, criarUsuario )
 
@@ -68,66 +69,34 @@ lacoMenuCadastroItem = do
         "3 - Listar itens cadastrados",
         "0 - Voltar ao menu principal"]
     case opção of
+        1 -> do
+            adicionarItem
+            lacoMenuCadastroItem
+        2 -> do
+            removerItem
+            lacoMenuCadastroItem
+        3 -> do
+            listarItens
+            lacoMenuCadastroItem
+        0 -> lacoMenuPrincipal
+        _ -> do
+            putStrLn "Opção Inválida!"
+            lacoMenuCadastroItem
+
+lacoMenuCadastroUsuario :: IO ()
+lacoMenuCadastroUsuario = do
+    opção <- menu "Cadastro de usuário" [
+        "1 - Adicionar novo usuário",
+        "2 - Remover usuário",
+        "3 - Listar usuários cadastrados",
+        "0 - Voltar ao menu principal"]
+    case opção of
         1 -> return ()
         2 -> return ()
         3 -> return ()
         0 -> lacoMenuPrincipal
         _ -> do
             putStrLn "Opção Inválida!"
-            lacoMenuCadastroItem
-
--- lacoMenuCadastroUsuario :: IO ()
--- lacoMenuCadastroUsuario = do
---     opção <- menu "Cadastro de usuário" [
---         "1 - Adicionar novo usuário",
---         "2 - Remover usuário",
---         "3 - Listar usuários cadastrados",
---         "0 - Voltar ao menu principal"]
---     case opção of
---         1 -> return ()
---         2 -> return ()
---         3 -> return ()
---         0 -> lacoMenuPrincipal
---         _ -> do
---             putStrLn "Opção Inválida!"
---             lacoMenuCadastroUsuario
-
-lacoMenuCadastroUsuario :: [Usuario] -> IO ()
-lacoMenuCadastroUsuario usuarios = do
-    opção <- menu "Cadastro de usuário" [
-         "1 - Adicionar novo usuário",
-         "2 - Remover usuário",
-         "3 - Listar usuários cadastrados",
-         "0 - Voltar ao menu principal"]
-    case opção of
-        1 -> do
-            putStrLn "Digite o nome:"
-            n <- getLine
-            putStrLn "Digite a matrícula:"
-            m <- getLine
-            putStrLn "Digite o e-mail:"
-            e <- getLine
-            let novo = criarUsuario n m e
-            case adicionarUsuario usuarios novo of
-                Left erro -> putStrLn erro >> menuUsuarios usuarios
-                Right novaLista -> do
-                    putStrLn "Usuário adicionado com sucesso!"
-                    menuUsuarios novaLista
-        2 -> do
-            putStrLn "Digite a matrícula do usuário a remover:"
-            m <- getLine
-            case removerUsuario usuarios m of
-                Left erro -> putStrLn erro >> menuUsuarios usuarios
-                Right novaLista -> do
-                    putStrLn "Usuário removido com sucesso!"
-                    menuUsuarios novaLista
-        3 -> do
-            putStrLn "\nUsuários cadastrados:"
-            putStrLn (listarUsuarios usuarios)
-            menuUsuarios usuarios
-        4 -> putStrLn "Voltando ao menu principal..."
-        _   -> do
-            putStrLn "Opção inválida, tente novamente."
             lacoMenuCadastroUsuario
 
 lacoMenuEmprestimoDevolucao :: IO ()

@@ -30,9 +30,7 @@ listarUsuarios usuarios = unlines (map formatar usuarios)
 
 -- Criar usuário
 criarUsuario :: String -> String -> String -> Usuario
-<<<<<<< HEAD
 criarUsuario n m e = Usuario {nome = n, matricula = (read m) :: Int, email = e}
-=======
 criarUsuario n m e = Usuario {nome = n, matricula = m, email = e}
 
 -- Salvar no CSV
@@ -57,5 +55,3 @@ lerUsuariosCSV arquivo = catch ler handleErro
         case splitOn "," linha of
             [n, m, e] -> criarUsuario n m e
             _         -> criarUsuario "" "" ""
-    
->>>>>>> f4db1af05677f3777f0838721a03903342f99bb3
