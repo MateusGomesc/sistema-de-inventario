@@ -277,3 +277,53 @@ Função principal com o fluxo completo para registrar uma devolução: <br/>
 atualizarDevolucao :: Int -> Day -> Emprestimo -> Emprestimo
 ```
 Atualiza a data efetiva de devolução de um empréstimo específico. <br/>
+
+### Gerenciar a Lista de Espera
+
+```haskell
+obterCodigoItemParaEspera :: [Item] -> IO (Maybe Item)
+```
+Solicita ao usuário o código de um item e verifica se ele está indisponível. <br/>
+Retorna Just item se o item existe e está indisponível. <br/>
+Retorna Nothing se o item não existe ou está disponível (não precisa de fila). <br/>
+
+```haskell
+adicionarNaEspera :: Int -> Int -> [Espera] -> ([Espera], Int)
+```
+Adiciona um usuário (pela matrícula) à fila de espera de um item. <br/>
+Evita duplicatas: não adiciona se o usuário já estiver na fila. <br/>
+Retorna a lista de espera atualizada e a posição do usuário na fila. <br/>
+
+```haskell
+confirmarInclusaoEspera :: Item -> Usuario -> Int -> IO Bool
+```
+Exibe os dados do item e do usuário, além da posição na fila, e solicita confirmação da inclusão. <br/>
+Retorna True se o usuário confirmar com "s". <br/>
+
+```haskell
+incluirNaListaEspera :: [Item] -> [Usuario] -> [Espera] -> IO [Espera]
+```
+Fluxo completo para incluir um usuário na fila de espera: <br/>
+1. Solicita código do item e matrícula do usuário. <br/>
+2. Verifica disponibilidade e existência. <br/>
+3. Confirma dados. <br/>
+4. Atualiza fila e registra log. <br/>
+
+```haskell
+negrito :: String -> String
+```
+Formata uma string para ser exibida em negrito no terminal para realce visual. <br/>
+
+```haskell
+verificarFilaNaDevolucao :: Item -> [Espera] -> [Usuario] -> IO ()
+```
+Verifica se o item devolvido possui fila de espera. <br/>
+Se houver, notifica o primeiro usuário da fila por mensagem no terminal. <br/>
+Registra log de notificação (sucesso ou erro). <br/>
+
+```haskell
+removerDaFilaSeForPrimeiro :: Item -> Usuario -> [Espera] -> IO [Espera]
+```
+Remove o usuário da fila de espera se ele for o primeiro da fila para o item. <br/>
+Atualiza a fila e registra log de sucesso. <br/>
+Se o usuário não for o primeiro, mantém a fila e registra log de erro. <br/>
