@@ -1,6 +1,9 @@
 module CadastroUsuario where
 
 import Types
+import System.IO
+import Data.List.Split (splitOn)
+import Control.Exception (catch, IOException)
 
 -- Função para adicionar usuário com validações
 adicionarUsuario :: [Usuario] -> Usuario -> Either String [Usuario]
@@ -27,4 +30,32 @@ listarUsuarios usuarios = unlines (map formatar usuarios)
 
 -- Criar usuário
 criarUsuario :: String -> String -> String -> Usuario
+<<<<<<< HEAD
 criarUsuario n m e = Usuario {nome = n, matricula = (read m) :: Int, email = e}
+=======
+criarUsuario n m e = Usuario {nome = n, matricula = m, email = e}
+
+-- Salvar no CSV
+salvarUsuariosCSV :: FilePath -> [Usuario] -> IO ()
+salvarUsuariosCSV arquivo usuarios = do
+    let linhas = map (\u -> nome u ++ "," ++ matricula u ++ "," ++ email u) usuarios
+    writeFile arquivo (unlines linhas)
+    
+-- Ler do CSV
+lerUsuariosCSV :: FilePath -> IO [Usuario]
+lerUsuariosCSV arquivo = catch ler handleErro
+  where
+    ler = do
+        conteudo <- readFile arquivo
+        let linhas = filter (not . null) (lines conteudo)
+        return $ map linhaParaUsuario linhas
+    handleErro :: IOException -> IO [Usuario]
+    handleErro _ = return [] 
+
+    linhaParaUsuario :: String -> Usuario
+    linhaParaUsuario linha =
+        case splitOn "," linha of
+            [n, m, e] -> criarUsuario n m e
+            _         -> criarUsuario "" "" ""
+    
+>>>>>>> f4db1af05677f3777f0838721a03903342f99bb3

@@ -12,10 +12,10 @@ data Usuario = Usuario {
     } deriving (Show, Eq)
 
 data TipoItem = Filme | Jogo | Livro
-    deriving(Show, Eq)
+    deriving(Show, Eq, Read) -- Adicione Read aqui
 
 data StatusItem = Emprestado | Disponivel
-    deriving(Show, Eq)
+    deriving(Show, Eq, Read) -- Adicione Read aqui
 
 data Item = Item{
         codigo :: Codigo,   
