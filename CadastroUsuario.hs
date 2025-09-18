@@ -1,76 +1,146 @@
--- CadastroUsuario.hs
-
 module CadastroUsuario where
 
-import Types
+-- Módulos padrão
+import Control.Exception (evaluate, catch, IOException)
+import Data.Char (toLower)
+import Data.List (find, isInfixOf)
 import System.IO
-import Control.Exception (catch, IOException)
 import Text.Read (readMaybe)
-import Listas (splitByDelimiter)
+import Data.Maybe (catMaybes)
 
--- Define o caminho do arquivo (ajuste se necessário)
-usuariosPath :: FilePath
-usuariosPath = "Files/usuarios.csv"
+-- Módulos do seu projeto
+import Log (logOperation)
+import Types
 
--- Função para adicionar usuário com validações
-adicionarUsuario :: [Usuario] -> Usuario -> Either String [Usuario]
-adicionarUsuario usuarios novo
+-- =================================
+-- FUNÇÕES AUXILIARES E LÓGICA PURA
+-- =================================
+
+-- | Separa uma string numa lista de strings, usando um caractere como delimitador.
+splitOn :: Char -> String -> [String]
+splitOn separador str = go [] str
+  where
+    go acc []
+      | null acc  = []
+      | otherwise = [reverse acc]
+    go acc (caractere : restoStr)
+      | caractere == separador = (reverse acc) : go [] restoStr
+      | otherwise = go (caractere : acc) restoStr
+
+-- | Valida um e-mail de forma simples.
+validarEmail :: String -> Bool
+validarEmail str = '@' `elem` str && '.' `elem` str
+
+-- | Mapeia uma linha CSV para um Maybe Usuario, tratando erros de conversão.
+mapearParaUsuario :: [String] -> Maybe Usuario
+mapearParaUsuario [nome, matriculaStr, email] =
+    case readMaybe matriculaStr of
+        Just mat -> Just (Usuario {nome = nome, matricula = mat, email = email})
+        Nothing  -> Nothing
+mapearParaUsuario _ = Nothing
+
+-- | Converte um Usuario de volta para o formato de linha CSV.
+usuarioParaLinhaCSV :: Usuario -> String
+usuarioParaLinhaCSV usr = nome usr ++ "," ++ show (matricula usr) ++ "," ++ email usr
+
+-- | Lógica pura para adicionar um usuário a uma lista, com validações.
+adicionarUsuario :: Usuario -> [Usuario] -> Either String [Usuario]
+adicionarUsuario novo usuarios
     | matriculaDuplicada = Left ("Erro: matrícula \"" ++ show (matricula novo) ++ "\" já cadastrada.")
     | emailInvalido      = Left ("Erro: e-mail \"" ++ email novo ++ "\" está mal formatado.")
     | otherwise          = Right (novo : usuarios)
   where
     matriculaDuplicada = any (\u -> matricula u == matricula novo) usuarios
-    emailInvalido = not ('@' `elem` email novo && '.' `elem` email novo)
+    emailInvalido = not (validarEmail (email novo))
 
--- Função para remover usuário pela matrícula
-removerUsuario :: [Usuario] -> Int -> Either String [Usuario]
-removerUsuario usuarios mat =
-    if any (\u -> matricula u == mat) usuarios
-        then Right (filter (\u -> matricula u /= mat) usuarios)
-        else Left ("Erro: matrícula \"" ++ show mat ++ "\" não encontrada.")
+-- | Lógica pura para remover um usuário de uma lista.
+removerUsuario :: Matricula -> [Usuario] -> Either String [Usuario]
+removerUsuario mat usuarios
+    | any (\u -> matricula u == mat) usuarios = Right (filter (\u -> matricula u /= mat) usuarios)
+    | otherwise = Left ("Erro: matrícula \"" ++ show mat ++ "\" não encontrada.")
 
--- Função para listar usuários
-listarUsuarios :: [Usuario] -> String
-listarUsuarios [] = "Nenhum usuário cadastrado."
-listarUsuarios usuarios = unlines (map formatar usuarios)
-  where
-    formatar u = "Nome: " ++ nome u ++ " | Matrícula: " ++ show (matricula u) ++ " | E-mail: " ++ email u
+-- =================================
+-- FUNÇÕES DE INTERAÇÃO COM FICHEIROS (IO)
+-- =================================
 
--- Cria um novo usuário
-criarUsuario :: String -> String -> String -> Maybe Usuario
-criarUsuario n m e = do
-    matInt <- readMaybe m :: Maybe Int
-    return Usuario {nome = n, matricula = matInt, email = e}
+-- | Define o caminho do ficheiro de utilizadores.
+userFile :: FilePath
+userFile = "Files/users.csv"
 
--- Salvar no CSV
-salvarUsuariosCSV :: FilePath -> [Usuario] -> IO ()
-salvarUsuariosCSV arquivo usuarios = do
-    let linhas = map (\u -> nome u ++ "," ++ show (matricula u) ++ "," ++ email u) usuarios
-    writeFile arquivo (unlines linhas)
-
--- Ler do CSV
-
-lerUsuariosCSV :: FilePath -> IO [Usuario]
-lerUsuariosCSV arquivo = catch ler handleErro
+-- | Carrega os utilizadores do ficheiro CSV, ignorando linhas corrompidas.
+carregarUsuarios :: IO [Usuario]
+carregarUsuarios = catch ler handleErro
   where
     ler = do
-        conteudo <- readFile arquivo
-        let linhas = filter (not . null) (lines conteudo)
-        let usuariosParsed = mapMaybe linhaParaUsuario linhas
-        return usuariosParsed
-
+        conteudo <- readFile userFile
+        _ <- evaluate (length conteudo) -- Força o fecho do ficheiro
+        let linhas = lines conteudo
+        return (catMaybes (map (mapearParaUsuario . splitOn ',') linhas))
     handleErro :: IOException -> IO [Usuario]
-    handleErro _ = return []
+    handleErro _ = return [] -- Retorna lista vazia se o ficheiro não existir
 
-    linhaParaUsuario :: String -> Maybe Usuario
-    linhaParaUsuario linha =
-        case splitByDelimiter ',' linha of  -- <-- Usando splitByDelimiter
-            [n, m, e] -> criarUsuario n m e
-            _         -> Nothing
+-- | Salva uma lista de utilizadores no ficheiro CSV, substituindo o conteúdo.
+salvarUsuarios :: [Usuario] -> IO ()
+salvarUsuarios usuarios = do
+    let linhas = map usuarioParaLinhaCSV usuarios
+    writeFile userFile (unlines linhas)
+
+-- =================================
+-- FUNÇÕES DE INTERFACE COM O UTILIZADOR (IO)
+-- =================================
+
+prompt :: String -> IO String
+prompt msg = do
+    putStr (msg ++ ": ")
+    getLine
+
+-- | Orquestra o processo de adicionar um novo utilizador.
+uiAdicionarUsuario :: IO ()
+uiAdicionarUsuario = do
+    putStrLn "\n--- Adicionar Novo Utilizador ---"
+    nomeStr <- prompt "Nome completo"
+    matriculaStr <- prompt "Matrícula (número)"
+    emailStr <- prompt "E-mail"
+
+    case readMaybe matriculaStr of
+        Nothing -> putStrLn "Erro: A matrícula deve ser um número."
+        Just mat -> do
+            let novoUsuario = Usuario {nome = nomeStr, matricula = mat, email = emailStr}
             
--- Adicionado para usar mapMaybe no lerUsuariosCSV
-mapMaybe :: (a -> Maybe b) -> [a] -> [b]
-mapMaybe f [] = []
-mapMaybe f (x:xs) = case f x of
-    Just y -> y : mapMaybe f xs
-    Nothing -> mapMaybe f xs
+            usuariosAtuais <- carregarUsuarios
+            
+            case adicionarUsuario novoUsuario usuariosAtuais of
+                Left erro -> putStrLn erro
+                Right novosUsuarios -> do
+                    salvarUsuarios novosUsuarios
+                    putStrLn "Utilizador adicionado com sucesso!"
+                    logOperation ("Cadastro do utilizador com matrícula " ++ show mat)
+
+-- | Orquestra o processo de remover um utilizador.
+uiRemoverUsuario :: IO ()
+uiRemoverUsuario = do
+    putStrLn "\n--- Remover Utilizador ---"
+    matriculaStr <- prompt "Matrícula do utilizador a remover"
+
+    case readMaybe matriculaStr of
+        Nothing -> putStrLn "Erro: A matrícula deve ser um número."
+        Just mat -> do
+            usuariosAtuais <- carregarUsuarios
+            
+            case removerUsuario mat usuariosAtuais of
+                Left erro -> putStrLn erro
+                Right novosUsuarios -> do
+                    salvarUsuarios novosUsuarios
+                    putStrLn "Utilizador removido com sucesso!"
+                    logOperation ("Remoção do utilizador com matrícula " ++ show mat)
+
+-- | Carrega e lista todos os utilizadores cadastrados.
+uiListarUsuarios :: IO ()
+uiListarUsuarios = do
+    putStrLn "\n--- Lista de Utilizadores Cadastrados ---"
+    usuarios <- carregarUsuarios
+    if null usuarios
+        then putStrLn "Nenhum utilizador cadastrado."
+        else mapM_ (putStrLn . formatarUsuario) usuarios
+  where
+    formatarUsuario u = "Matrícula: " ++ show (matricula u) ++ " | Nome: " ++ nome u ++ " | E-mail: " ++ email u
