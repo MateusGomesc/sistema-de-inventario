@@ -45,7 +45,8 @@ confirmarInclusaoEspera item usuario pos = do
     hSetEncoding stdout utf8
     putStrLn $ "\n" ++ negrito "Confirme os dados para inclusão na lista de espera:"
     putStrLn $ negrito "Item: " ++ titulo item ++ " (" ++ show (tipo item) ++ ")"
-    putStrLn $ negrito "Usuário: " ++ nome usuario ++ " - Matrícula: " ++ matricula usuario
+    putStrLn $ negrito "Usuário: " ++ nome usuario ++ " - Matrícula: " ++ show (matricula usuario)
+
     putStrLn $ "Posição na fila: " ++ show pos
     putStrLn "Confirmar inclusão? (s/n)"
     resp <- getLine
@@ -61,7 +62,7 @@ incluirNaListaEspera itens usuarios esperas = do
             putStrLn "Digite a matrícula do usuário:"
             matStr <- getLine
             let mat = read matStr :: Int
-            case find (\u -> read (matricula u) == mat) usuarios of
+            case find (\u -> matricula u == mat) usuarios of
                 Nothing -> do
                     putStrLn "❌ Usuário não encontrado."
                     return esperas
@@ -87,20 +88,20 @@ verificarFilaNaDevolucao item esperas usuarios =
         Nothing -> return ()
         Just espera -> do
             let matPrimeiro = head (lista espera)
-            case find (\u -> read (matricula u) == matPrimeiro) usuarios of
+            case find (\u -> matricula u == matPrimeiro) usuarios of
                 Just usuario -> do
                     putStrLn $ "📧 Item com fila de espera. O primeiro usuário na fila (" ++ nome usuario ++ ") foi notificado por email: " ++ email usuario
                     registrarLog "Fila de espera (notificação)" item usuario "Sucesso"
                 Nothing -> do
                     putStrLn "⚠️ Item com fila de espera, mas usuário não encontrado para notificação."
-                    let usuarioFake = Usuario "Desconhecido" (show matPrimeiro) "sem@email.com"
+                    let usuarioFake = Usuario "Desconhecido" matPrimeiro "sem@email.com"
                     registrarLog "Fila de espera (notificação)" item usuarioFake "Erro - Usuário não encontrado"
 
 
 removerDaFilaSeForPrimeiro :: Item -> Usuario -> [Espera] -> IO [Espera]
 removerDaFilaSeForPrimeiro item usuario esperas =
     let codItem = codigo item
-        matUsuario = read (matricula usuario)
+        matUsuario = matricula usuario
     in case find (\e -> espCodigoItem e == codItem) esperas of
         Nothing -> return esperas
         Just espera ->
