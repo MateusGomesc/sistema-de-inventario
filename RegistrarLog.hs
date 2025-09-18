@@ -11,7 +11,7 @@ registrarLog operacao item usuario resultado = do
     let timestamp = formatTime defaultTimeLocale "[%Y-%m-%d %H:%M]" zonedTime
         linha = timestamp ++ " " ++ operacao ++ ": " ++
                 tipoStr (tipo item) ++ " \"" ++ titulo item ++ "\" (" ++ show (codigo item) ++ ")" ++
-                " para usuário: \"" ++ nome usuario ++ "\" (" ++ matricula usuario ++ ") " ++
+                " para usuário: \"" ++ nome usuario ++ "\" (" ++ show (matricula usuario) ++ ") " ++
                 "(" ++ resultado ++ ")\n"
     appendFile "Files/logs.txt" linha
 
