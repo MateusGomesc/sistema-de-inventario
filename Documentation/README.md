@@ -14,11 +14,27 @@ Percorre a string acumulando caracteres até encontrar o separador.<br/>
 Quando encontra o separador, finaliza a substring acumulada e reinicia a coleta para a próxima parte.<br/>
 Retorna uma lista de strings resultantes da divisão da string original.<br/>
 
-
 ```haskell
-splitOn :: Char -> String -> [String]
+validarEmail :: String -> Bool
 ```
 
+Recebe uma string representando um email.<br/>
+Verifica se contém ao menos um caractere '@' e um '.'.<br/>
+Retorna True se for válido ou False caso contrário.<br/>
+
+```haskell
+mapearParaUsuario :: [String] -> Maybe Usuario
+```
+
+Mapeia uma lista de strings (proveniente de uma linha CSV) para um 'Maybe Usuario'.<br/>
+Espera exatamente três campos: nome, matrícula e email.<br/>
+Converte a matrícula de String para Int utilizando 'readMaybe'.<br/>
+Retorna 'Just Usuario' em caso de sucesso ou 'Nothing' em caso de falha na conversão.<br/>
+
+```haskell
+mapearParaUsuario :: [String] -> Maybe Usuario
+```
+ 
 ### Edição
 
 ```haskell
