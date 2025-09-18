@@ -2,6 +2,39 @@
 
 ## Funções
 
+
+## Cadastro de itens 
+
+```haskell
+mapearParaItem :: [String] -> Maybe Item
+```
+Recebe uma lista de strings representando os campos de um item no CSV.<br/>
+Tenta converter os campos numéricos (código, ano, tipo, status) para seus respectivos tipos.<br/>
+Se todas as conversões forem bem-sucedidas, retorna Just Item com os dados.<br/>
+Caso contrário, retorna Nothing indicando erro no parsing.<br/>
+
+```haskell
+encontrarLinhaItem :: Codigo -> [String] -> Maybe (Int, String)
+```
+Recebe um código e uma lista de linhas do arquivo CSV.<br/>
+Percorre cada linha, tentando convertê-la em um Item.<br/>
+Compara o código informado com o código do item da linha.<br/>
+Se encontrar, retorna Just (n, linha) onde n é o índice da linha.<br/>
+Se não encontrar, retorna Nothing.<br/>
+
+```haskell
+adicionarItem :: IO ()
+```
+Exibe um menu para cadastrar um novo item.<br/>
+Solicita ao usuário código, título, autor, ano e tipo do item.<br/>
+Verifica se o código já existe no arquivo antes de cadastrar.<br/>
+Caso o código seja único e os dados válidos, grava uma nova linha no CSV com o item.<br/>
+Exibe mensagens de erro quando os dados inseridos forem inválidos.<br/>
+
+
+
+
+
 ## Cadastro de Usuários
 
 ```haskell
