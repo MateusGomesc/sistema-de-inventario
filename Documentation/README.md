@@ -32,6 +32,24 @@ Caso o código seja único e os dados válidos, grava uma nova linha no CSV com 
 Exibe mensagens de erro quando os dados inseridos forem inválidos.<br/>
 
 
+```haskell
+removerItem :: IO ()
+```
+Exibe um menu para remover um item.<br/>
+Solicita ao usuário o código do item a ser removido.<br/>
+Verifica se o código existe no arquivo.<br/>
+Se existir, remove a linha correspondente e regrava o arquivo.<br/>
+Se não existir, informa que o item não foi encontrado.<br/>
+
+
+```haskell
+listarItens :: IO ()
+```
+Exibe todos os itens cadastrados no arquivo CSV.<br/>
+Lê o conteúdo do arquivo e percorre cada linha.<br/>
+Tenta converter a linha em um Item.<br/>
+Se conseguir, exibe as informações formatadas do item.<br/>
+Se encontrar linha corrompida, exibe uma mensagem de erro.<br/>
 
 
 
