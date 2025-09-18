@@ -278,6 +278,50 @@ atualizarDevolucao :: Int -> Day -> Emprestimo -> Emprestimo
 ```
 Atualiza a data efetiva de devolução de um empréstimo específico. <br/>
 
+### Registrar Renovação de Empréstimo
+
+```haskell
+buscarEmprestimoAtivo :: Int -> Int -> [Emprestimo] -> Maybe Emprestimo
+```
+Busca um empréstimo ativo (ainda não devolvido) com base no código do item e na matrícula do usuário. <br/>
+Retorna Just Emprestimo se encontrado. <br/>
+Retorna Nothing se não houver empréstimo ativo correspondente. <br/>
+
+```haskell
+itemTemFila :: Int -> [Espera] -> Bool
+```
+Verifica se o item possui fila de espera. <br/>
+Retorna True se houver pelo menos um usuário na fila. <br/>
+Retorna False se não houver fila para o item. <br/>
+
+```haskell
+calcularNovaData :: TipoItem -> Day -> Day
+```
+Calcula a nova data de devolução com base no tipo do item e na data atual. <br/>
+Filmes e jogos: +2 dias úteis <br/>
+Livros: +5 dias úteis <br/>
+Utiliza a função adicionarDiasUteis para ignorar finais de semana. <br/>
+
+```haskell
+atualizarRenovacao :: Int -> Int -> Day -> [Emprestimo] -> [Emprestimo]
+```
+Atualiza a data de devolução esperada de um empréstimo específico. <br/>
+Identifica o empréstimo pelo código do item e matrícula do usuário. <br/>
+Retorna a lista de empréstimos atualizada. <br/>
+
+```haskell
+renovarEmprestimo :: [Item] -> [Usuario] -> [Emprestimo] -> [Espera] -> IO [Emprestimo]
+```
+Função com o fluxo completo para renovar um empréstimo: <br/>
+1. Solicita código do item e matrícula do usuário. <br/>
+2. Verifica se o empréstimo está ativo. <br/>
+3. Verifica se o item possui fila de espera (bloqueia renovação). <br/>
+4. Calcula nova data de devolução. <br/>
+5. Exibe dados e solicita confirmação. <br/>
+6. Atualiza empréstimo e registra log. <br/>
+ - Se confirmado, atualiza a data e registra sucesso. <br/>
+ - Se cancelado ou bloqueado, exibe mensagem e registra erro. <br/>
+
 ### Gerenciar a Lista de Espera
 
 ```haskell
