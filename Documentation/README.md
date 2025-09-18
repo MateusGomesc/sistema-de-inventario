@@ -2,6 +2,23 @@
 
 ## Funções
 
+## Cadastro de Usuários
+
+```haskell
+splitOn :: Char -> String -> [String]
+```
+
+Recebe um caractere que será utilizado como separador.<br/>
+Recebe uma string que será dividida de acordo com esse separador.<br/>
+Percorre a string acumulando caracteres até encontrar o separador.<br/>
+Quando encontra o separador, finaliza a substring acumulada e reinicia a coleta para a próxima parte.<br/>
+Retorna uma lista de strings resultantes da divisão da string original.<br/>
+
+
+```haskell
+splitOn :: Char -> String -> [String]
+```
+
 ### Edição
 
 ```haskell
