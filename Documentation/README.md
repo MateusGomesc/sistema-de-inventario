@@ -32,9 +32,80 @@ Converte a matrícula de String para Int utilizando 'readMaybe'.<br/>
 Retorna 'Just Usuario' em caso de sucesso ou 'Nothing' em caso de falha na conversão.<br/>
 
 ```haskell
-mapearParaUsuario :: [String] -> Maybe Usuario
+usuarioParaLinhaCSV :: Usuario -> String
 ```
- 
+
+Converte um 'Usuario' em uma linha CSV (nome,matrícula,email).<br/>
+
+```haskell
+adicionarUsuario :: Usuario -> [Usuario] -> Either String [Usuario]
+```
+
+Lógica pura para adicionar um usuário a uma lista, com validações.<br/>
+Recebe um 'Usuario' novo e uma lista de usuários já cadastrados.<br/>
+Verifica se a matrícula já existe ou se o e-mail está mal formatado.<br/>
+Retorna 'Left erro' em caso de falha ou 'Right listaAtualizada' em caso de sucesso.<br/>
+
+```haskell
+removerUsuario :: Matricula -> [Usuario] -> Either String [Usuario]
+```
+
+Lógica pura para remover um usuário de uma lista.<br/>
+Recebe uma matrícula e a lista de usuários cadastrados.<br/>
+Se a matrícula existir, retorna 'Right listaSemUsuario'.<br/>
+Caso contrário, retorna 'Left erro'.<br/>
+
+```haskell
+userFile :: FilePath
+```
+
+ Define o caminho do ficheiro CSV onde os utilizadores são armazenados.<br/>
+
+```haskell
+carregarUsuarios :: IO [Usuario]
+```
+
+Carrega os utilizadores do ficheiro CSV.<br/>
+Converte cada linha em um 'Usuario', ignorando linhas corrompidas.<br/>
+Retorna uma lista vazia caso o ficheiro não exista.<br/>
+
+```haskell
+salvarUsuarios :: [Usuario] -> IO ()
+```
+
+Salva uma lista de utilizadores no ficheiro CSV.<br/>
+Substitui todo o conteúdo do ficheiro com a lista fornecida.<br/>
+
+```haskell
+prompt :: String -> IO String
+```
+
+Exibe uma mensagem no terminal e lê a entrada do usuário.<br/>
+
+```haskell
+uiAdicionarUsuario :: IO ()
+```
+
+Orquestra o processo de adicionar um novo utilizador.<br/>
+Solicita nome, matrícula e e-mail pelo terminal.<br/>
+Valida a matrícula e o e-mail antes de salvar.<br/>
+Em caso de erro, exibe mensagem; em caso de sucesso, salva no ficheiro e registra log.<br/>
+
+```haskell
+uiRemoverUsuario :: IO ()
+```
+
+Orquestra o processo de remover um utilizador.<br/>
+Solicita a matrícula pelo terminal.<br/>
+Se a matrícula existir, remove o utilizador do ficheiro e registra log.<br/>
+Caso contrário, exibe mensagem de erro.<br/>
+
+```haskell
+uiListarUsuarios :: IO ()
+```
+Carrega e lista todos os utilizadores cadastrados no ficheiro.<br/>
+Se não houver nenhum, informa que a lista está vazia.<br/>
+
 ### Edição
 
 ```haskell
