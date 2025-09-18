@@ -371,3 +371,15 @@ removerDaFilaSeForPrimeiro :: Item -> Usuario -> [Espera] -> IO [Espera]
 Remove o usuário da fila de espera se ele for o primeiro da fila para o item. <br/>
 Atualiza a fila e registra log de sucesso. <br/>
 Se o usuário não for o primeiro, mantém a fila e registra log de erro. <br/>
+
+### Registro de Log
+
+```haskell
+registrarLog :: String -> Item -> Usuario -> String -> IO ()
+```
+Registra uma linha de log no arquivo Files/logs.txt, contendo informações sobre uma operação realizada no sistema. <br/>
+
+```haskell
+tipoStr :: TipoItem -> String
+```
+Converte o tipo de item (Livro, Filme, Jogo) para uma string legível que é usada no log. <br/>
