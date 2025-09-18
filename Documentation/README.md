@@ -486,4 +486,27 @@ Registra uma linha de log no arquivo Files/logs.txt, contendo informações sobr
 ```haskell
 tipoStr :: TipoItem -> String
 ```
+
 Converte o tipo de item (Livro, Filme, Jogo) para uma string legível que é usada no log. <br/>
+
+### Relatorio
+
+```haskell
+listarEmprestimosAtivos :: [Emprestimo] -> [Item] -> [Usuario] -> IO ()
+```
+Cria relatórios categorizados por tipo de item (Livro, Filme, Jogo), facilitando a visualização de todos os empréstimos em andamento.
+
+```haskell
+historicoUsuario :: Matricula -> [Emprestimo] -> [Item] -> [Usuario] -> IO ()
+```
+Gera um relatório detalhado para um usuário específico, mostrando o histórico completo de empréstimos e devoluções.
+
+```haskell
+relatorioItensComEspera :: [Espera] -> [Item] -> [Usuario] -> IO ()
+```
+Identifica e lista todos os itens que têm uma fila de espera, mostrando quem são os usuários na fila.
+
+```haskell
+relatorioUsoSistema :: [Emprestimo] -> [Item] -> [Usuario] -> IO ()
+```
+Oferece um panorama geral do sistema, detalhando a quantidade de operações realizadas por tipo de item e por usuário, fornecendo uma visão estatística sobre a utilização da biblioteca.
